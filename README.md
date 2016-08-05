@@ -22,6 +22,9 @@ let manager = FlipCoinManager(
     UIImage(named: "image-three")!
   ]
 )
+
+// change flipping speed if you like
+manager.speed = 0.15
 ```
 
 ### Start flipping
