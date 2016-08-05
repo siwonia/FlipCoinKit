@@ -3,6 +3,7 @@ FlipCoinKit
 
 ### About
 FlipCoinKit is an open source framework to let images in your iOS app flip like a coin.
+
 ![FlipCoinKit](https://raw.githubusercontent.com/schultka/FlipCoinKit/master/flip-coin.gif)
 
 ### Initialize
