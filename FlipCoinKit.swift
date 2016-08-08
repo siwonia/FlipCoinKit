@@ -10,7 +10,7 @@ import UIKit
 
 class FlipCoinManager {
     
-    private enum Progress: Float {
+    private enum FlipPosition: Float {
         case Full = 0.0
         case Half = 0.5
     }
@@ -24,7 +24,7 @@ class FlipCoinManager {
     private var imageView: UIImageView?
     private var completion: (() -> Void)?
     
-    private var isRotating: Bool = false
+    private var isFlipping: Bool = false
     private var isStopping: Bool = false
     
     private var currentIndex: Int = 0
@@ -59,16 +59,16 @@ class FlipCoinManager {
     }
     
     // start half or full flip animation
-    private func flip(progress: Progress) {
+    private func flip(flipPosition: FlipPosition) {
         CATransaction.begin()
         CATransaction.setCompletionBlock({
-            self.flipComplete(progress)
+            self.flipComplete(flipPosition)
         })
         
         let transition = CATransition()
         
-        transition.startProgress = progress.rawValue
-        transition.endProgress = progress.rawValue + 0.5
+        transition.startProgress = flipPosition.rawValue
+        transition.endProgress = flipPosition.rawValue + 0.5
         transition.type = TRANSITION_TYPE
         transition.subtype = TRANSITION_SUBTYPE
         transition.duration = speed
@@ -91,49 +91,50 @@ class FlipCoinManager {
     }
     
     // event is called after every half round
-    private func flipComplete(progress: Progress) {
-        if (!isRotating) {
+    private func flipComplete(flipPosition: FlipPosition) {
+        if (!isFlipping) {
             return
         }
         
-        // it's also possible to flip a colored view, without any images
+        // change image only after a full round
         if let imageView = self.imageView {
-            if (progress == .Full) {
+            if (flipPosition == .Full) {
                 increaseCurrentIndex()
                 imageView.image = self.images[currentIndex]
             }
         }
         
-        if (currentIndex == stopIndex && isStopping && progress == .Half) {
+        if (currentIndex == stopIndex && isStopping && flipPosition == .Half) {
             stopFlipping(currentIndex)
         } else {
-            self.flip(progress == .Full ? .Half : .Full)
+            self.flip(flipPosition == .Full ? .Half : .Full)
         }
     }
     
     // start infinite flipping
     func startFlipping() {
-        if (isRotating) {
+        if (isFlipping) {
             return
         }
         
         isStopping = false
-        isRotating = true
+        isFlipping = true
         completion = nil
+        
         flip(.Full)
     }
     
-    // stop flipping as soon as image is reached
-    func stopFlipping(index: Int, completion: () -> Void) {
-        isStopping = true
-        stopIndex = index
-        self.completion = completion
+    // stop flipping immediately
+    func stopFlipping() {
+        isFlipping = false
+        isStopping = false
+        
+        mainView.layer.removeAllAnimations()
     }
     
-    // stop flipping immediately
+    // stop flipping immediately and show image with index
     func stopFlipping(index: Int) {
-        isRotating = false
-        isStopping = false
+        stopFlipping()
         
         if let imageView = self.imageView {
             imageView.image = self.images[index]
@@ -142,7 +143,13 @@ class FlipCoinManager {
         if let completion = self.completion {
             completion()
         }
-        
-        mainView.layer.removeAllAnimations()
+    }
+    
+    
+    // stop flipping as soon as image with index is reached
+    func stopFlipping(index: Int, completion: () -> Void) {
+        isStopping = true
+        stopIndex = index
+        self.completion = completion
     }
 }
